@@ -9,6 +9,8 @@ from rest_framework.routers import DefaultRouter
 
 from django.utils.translation import gettext_lazy as _
 
+from django.conf import settings
+
 from paperless.consumers import StatusConsumer
 from documents.views import (
     CorrespondentViewSet,
@@ -35,6 +37,9 @@ api_router.register(r"logs", LogViewSet, basename="logs")
 api_router.register(r"tags", TagViewSet)
 api_router.register(r"saved_views", SavedViewViewSet)
 
+base_path = ""
+if settings.BASE_URL:
+    base_path = settings.BASE_URL[1:] + "/"
 
 urlpatterns = [
     re_path(r"^api/", include([
@@ -73,24 +78,29 @@ urlpatterns = [
     re_path(r"^fetch/", include([
         re_path(
             r"^doc/(?P<pk>\d+)$",
-            RedirectView.as_view(url='/api/documents/%(pk)s/download/'),
+            RedirectView.as_view(url='/' + base_path +
+                                 'api/documents/%(pk)s/download/'),
         ),
         re_path(
             r"^thumb/(?P<pk>\d+)$",
-            RedirectView.as_view(url='/api/documents/%(pk)s/thumb/'),
+            RedirectView.as_view(url='/' + base_path +
+                                 'api/documents/%(pk)s/thumb/'),
         ),
         re_path(
             r"^preview/(?P<pk>\d+)$",
-            RedirectView.as_view(url='/api/documents/%(pk)s/preview/'),
+            RedirectView.as_view(url='/' + base_path +
+                                 'api/documents/%(pk)s/preview/'),
         ),
     ])),
 
     re_path(r"^push$", csrf_exempt(
-        RedirectView.as_view(url='/api/documents/post_document/'))),
+        RedirectView.as_view(url='/' + base_path +
+                             'api/documents/post_document/'))),
 
     # Frontend assets TODO: this is pretty bad, but it works.
     path('assets/<path:path>',
-         RedirectView.as_view(url='/static/frontend/en-US/assets/%(path)s')),
+         RedirectView.as_view(url='/' + base_path
+                              + 'static/frontend/en-US/assets/%(path)s')),
     # TODO: with localization, this is even worse! :/
 
     # login, logout
@@ -100,9 +110,11 @@ urlpatterns = [
     re_path(r".*", login_required(IndexView.as_view())),
 ]
 
+if settings.BASE_URL:
+    urlpatterns = [path(base_path, include(urlpatterns))]
 
 websocket_urlpatterns = [
-    re_path(r'ws/status/$', StatusConsumer.as_asgi()),
+    re_path(base_path + r'ws/status/$', StatusConsumer.as_asgi()),
 ]
 
 # Text in each page's <h1> (and above login form).
