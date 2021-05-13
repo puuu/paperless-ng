@@ -99,8 +99,8 @@ urlpatterns = [
 
     # Frontend assets TODO: this is pretty bad, but it works.
     path('assets/<path:path>',
-         RedirectView.as_view(url='/' + base_path
-                              + 'static/frontend/en-US/assets/%(path)s')),
+         RedirectView.as_view(url=settings.STATIC_URL +
+                              'frontend/en-US/assets/%(path)s')),
     # TODO: with localization, this is even worse! :/
 
     # login, logout
